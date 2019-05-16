@@ -18,9 +18,9 @@ module.exports = {
         minimize: NODE_ENV !== 'development',
     },
 
-    // plugins: [
-    //     new webpack.NoEmitOnErrorsPlugin(),
-    // ],
+    plugins: [
+        new webpack.DefinePlugin({ __IS_DEV__: NODE_ENV === 'development' }),
+    ],
 
     module: {
         rules: [
@@ -55,5 +55,5 @@ module.exports = {
         aggregateTimeout: 100,
     },
 
-    // devtool: NODE_ENV === 'development' ? 'cheap-inline-module-source-map' : false,
+    devtool: NODE_ENV === 'development' ? 'cheap-inline-module-source-map' : false,
 };

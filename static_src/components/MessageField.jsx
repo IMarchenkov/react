@@ -4,6 +4,9 @@ import {withStyles} from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import PropTypes from "prop-types";
+import {bindActionCreators} from "redux";
+import { sendMessage } from "../actions/messageActions";
+import connect from "react-redux/es/connect/connect";
 
 const styles = theme => ({
     button: {
@@ -17,27 +20,26 @@ const styles = theme => ({
 class MessageField extends React.Component {
     state = {
         input: '',
-        messageList: [1],
-        messages: {
-            1: {sender: 'Robot', text: 'Купи слона!', color: 'default'}
-        },
-        nextId: 2,
     };
 
     static propTypes = {
         messageCounter: PropTypes.func.isRequired,
+        chats: PropTypes.object.isRequired,
+        messages: PropTypes.object.isRequired,
+        nextId: PropTypes.number.isRequired,
+        sendMessage: PropTypes.func.isRequired,
     };
 
     componentDidUpdate(prevProps, prevState) {
-        const {nextId, messages, messageList} = this.state;
+        const {nextId, messages, chats} = this.props;
         const lastSender = messages[nextId - 1].sender;
         const lastMessage = messages[nextId - 1].text;
-        if (lastSender === 'me' && messageList.length > prevState.messageList.length) {
+        if (lastSender === 'me' && chats[1].messageList.length > prevProps.chats[1].messageList.length) {
             setTimeout(() => this.handleSendMessage(`Все говорят "${lastMessage}", а ты купи слона!`, 'Robot', 'default'), 500)
         }
 
-        if (messageList.length > prevState.messageList.length)
-            this.props.messageCounter(messageList.length);
+        if (chats[1].messageList.length > prevProps.chats[1].messageList.length)
+            this.props.messageCounter(chats[1].messageList.length);
     }
 
     handleInput = (e) => {
@@ -45,13 +47,7 @@ class MessageField extends React.Component {
     };
 
     handleSendMessage = (text, sender, color) => {
-        const {messageList, messages, nextId} = this.state;
-        this.setState({
-            messageList: [...messageList, nextId],
-            messages: {...messages, [nextId]: {text, sender, color}},
-            input: '',
-            nextId: nextId + 1,
-        })
+        this.props.sendMessage(text, sender, color);
     };
 
     handleKeyUp = (e) => {
@@ -61,9 +57,9 @@ class MessageField extends React.Component {
     };
 
     render() {
-        const {messages, messageList, input} = this.state;
-        const {classes} = this.props;
-        const messageElements = messageList
+        const { input} = this.state;
+        const {classes, messages, chats } = this.props;
+        const messageElements = chats[1].messageList
             .map((messageId, index) => <Message
                     key={index}
                     sender={messages[messageId].sender}
@@ -99,4 +95,12 @@ MessageField.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(MessageField);
+const mapStateToProps = ({ messageReducer }) => ({
+    chats: messageReducer.chats,
+    messages: messageReducer.messages,
+    nextId: messageReducer.nextId,
+});
+
+const mapDispatchToProps = dispatch => bindActionCreators({ sendMessage }, dispatch);
+
+export default withStyles(styles)(connect(mapStateToProps, mapDispatchToProps)(MessageField));
